@@ -20,6 +20,7 @@ nv.models.multiChart = function() {
         useVoronoi = true,
         interactiveLayer = nv.interactiveGuideline(),
         useInteractiveGuideline = false,
+        zoomType = null,
         legendRightAxisHint = ' (right axis)',
         duration = 250
         ;
@@ -50,7 +51,7 @@ nv.models.multiChart = function() {
 
         legend = nv.models.legend().height(30),
         tooltip = nv.models.tooltip(),
-        dispatch = d3.dispatch();
+        dispatch = d3.dispatch('zoom');
 
     var charts = [lines1, lines2, scatters1, scatters2, bars1, bars2, stack1, stack2];
 
@@ -116,6 +117,7 @@ nv.models.multiChart = function() {
             gEnter.append('g').attr('class', 'lines2Wrap');
             gEnter.append('g').attr('class', 'legendWrap');
             gEnter.append('g').attr('class', 'nv-interactive');
+            gEnter.append('g').attr('class', 'nv-zoomLayer');
 
             var g = wrap.select('g');
 
@@ -321,6 +323,67 @@ nv.models.multiChart = function() {
                     .svgContainer(container)
                     .xScale(x);
                 wrap.select(".nv-interactive").call(interactiveLayer);
+
+                zoomLayer
+                    .width(availableWidth)
+                    .height(availableHeight)
+                    .margin({left:margin.left, top:margin.top})
+                    .svgContainer(container)
+                    .xScale(x);
+                wrap.select(".nv-zoomLayer").call(zoomLayer);
+            }
+
+            if (zoomType && zoomType === 'x') {
+                if (wrap.selectAll(".nv-zoomLayer g.button").node() == null) {
+                    var resetZoomButton = wrap.select(".nv-zoomLayer")
+                        .append('g')
+                        .attr('class', 'button')
+                        .attr('cursor', 'pointer')
+                    resetZoomButton.append('rect')
+                        .attr('x', availableWidth - 72 - 20)
+                        .attr('y', 4)
+                        .attr('rx', 2)
+                        .attr('ry', 2)
+                        .attr('width', 78)
+                        .attr('height', 25)
+                        .attr('fill', '#fff')
+                        .attr('stroke', '#999')
+                        .attr('strokeWidth', 1)
+
+                    resetZoomButton
+                        .append('text')
+                        .attr('x', availableWidth - 72 - 10)
+                        .attr('y', 22)
+                        .text('Rest Zoom');
+
+                    resetZoomButton.on('click', function() {
+                        var min = d3.min(container.data()[0], function(d) {
+                            return d3.min(d.values, function(d) {
+                                return chart.x()(d);
+                            })
+                        });
+                        var max = d3.max(container.data()[0], function(d) {
+                            return d3.max(d.values, function(d) {
+                                return chart.x()(d);
+                            })
+                        });
+                        chart.options({
+                            xDomain: [min, max]
+                        });
+
+                        dispatch.zoom({
+                            type: 'reset',
+                            xDomain: [min, max]
+                        });
+
+                        chart.update();
+                    });
+                } else {
+                    wrap.select(".nv-zoomLayer g.button rect")
+                        .attr('x', availableWidth - 72 - 20)
+                    wrap.select(".nv-zoomLayer g.button text")
+                        .attr('x', availableWidth - 72 - 10)
+                }
             }
 
             //============================================================
@@ -525,6 +588,77 @@ nv.models.multiChart = function() {
                 interactiveLayer.dispatch.on("elementMouseout",function(e) {
                     clearHighlights();
                 });
+
+                if (zoomType === 'x') {
+                    //---drag---
+                    var currentXValue = null;
+                    //the svg position x of drag point
+                    var dragStartX = null;
+                    // the point.x value of drag point
+                    var dragStartXValue = null;
+                    var dragStartYValue = null;
+                    zoomLayer.dispatch.on('elementMousemove', function(e) {
+                        if (dragStartXValue === null) {
+                            return;
+                        }
+                        var pointXLocation;
+                        currentXValue = e.pointXValue;
+                        data.filter(function(series, i) {
+                            series.seriesIndex = i;
+                            return !series.disabled;
+                        }).forEach(function(series) {
+                            var pointIndex = nv.interactiveBisect(series.values, e.pointXValue, chart.x());
+                            var point = series.values[pointIndex];
+
+                            if (typeof point === 'undefined') return;
+                            if (typeof pointXLocation === 'undefined') pointXLocation = chart.xScale()(chart.x()(point,pointIndex));
+
+                        });
+
+                        zoomLayer.updateSelectArea(dragStartX, pointXLocation)
+                    });
+
+                    zoomLayer.dispatch.on("elementDragStart", function(e) {
+                        var pointXLocation;
+                        dragStartXValue = e.pointXValue;
+                        data.filter(function(series, i) {
+                            series.seriesIndex = i;
+                            return !series.disabled;
+                        }).forEach(function(series) {
+                            var pointIndex = nv.interactiveBisect(series.values, e.pointXValue, chart.x());
+                            var point = series.values[pointIndex];
+
+                            if (typeof point === 'undefined') return;
+                            if (typeof pointXLocation === 'undefined') pointXLocation = chart.xScale()(chart.x()(point,pointIndex));
+                        });
+
+                        dragStartX = pointXLocation;
+
+                        zoomLayer.renderSelectArea(pointXLocation)
+                    });
+
+                    zoomLayer.dispatch.on("elementDragEnd", function(e) {
+                        if (dragStartXValue != currentXValue) {
+                            var xDomain = [
+                                d3.min([dragStartXValue, currentXValue]),
+                                d3.max([dragStartXValue, currentXValue])
+                            ];
+                            chart.options({
+                                xDomain: xDomain
+                            });
+
+                            chart.update();
+                            dispatch.zoom({
+                                type: 'zoom',
+                                xDomain: xDomain
+                            });
+                        }
+
+                        dragStartXValue = null;
+                        dragStartX = null;
+                        zoomLayer.removeSelectArea();
+                    });
+                }
             } else {
                 lines1.dispatch.on('elementMouseover.tooltip', mouseover_line);
                 lines2.dispatch.on('elementMouseover.tooltip', mouseover_line);
@@ -593,6 +727,7 @@ nv.models.multiChart = function() {
     chart.yAxis2 = yAxis2;
     chart.tooltip = tooltip;
     chart.interactiveLayer = interactiveLayer;
+    var zoomLayer = nv.zoomLayer();
 
     chart.options = nv.utils.optionsFunc.bind(chart);
 
@@ -607,6 +742,7 @@ nv.models.multiChart = function() {
         noData:    {get: function(){return noData;}, set: function(_){noData=_;}},
         interpolate:    {get: function(){return interpolate;}, set: function(_){interpolate=_;}},
         legendRightAxisHint:    {get: function(){return legendRightAxisHint;}, set: function(_){legendRightAxisHint=_;}},
+        zoomType:    {get: function(){return zoomType;}, set: function(_){zoomType=_;}},
 
         // options that require extra logic in the setter
         margin: {get: function(){return margin;}, set: function(_){
