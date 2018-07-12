@@ -48,5 +48,8 @@
     "karma-spec-reporter": "0.0.13",
     "mocha": "^1.21.4",
     "moment": "^2.18.1"
+  },
+  "dependencies": {
+    "bower": "^1.8.4"
   }
 }
