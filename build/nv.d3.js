@@ -13551,7 +13551,10 @@ nv.models.multiChart = function() {
               };
 
               var relevantChart = chartMap[series.type]['yAxis' + series.yAxis].chart;
-              var relevantDatasets = chartMap[series.type]['yAxis' + series.yAxis].data;
+              var relevantDatasets = chartMap[series.type]['yAxis' + series.yAxis].data.filter(function(series) {
+                return(!series.disabled);
+              });
+
               var seriesIndex = relevantDatasets.reduce(function (seriesIndex, dataSet, i) {
                 return dataSet.key === series.key ? i : seriesIndex;
               }, 0);
