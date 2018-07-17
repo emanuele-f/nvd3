@@ -1,4 +1,4 @@
-/* nvd3 version 1.8.6-dev (https://github.com/novus/nvd3) 2018-07-13 */
+/* nvd3 version 1.8.6-dev (https://github.com/novus/nvd3) 2018-07-17 */
 (function(){
 
 // set up main nv object
@@ -969,7 +969,7 @@ nv.models.tooltip = function() {
             var pos = position(),
                 gravityOffset = calcGravityOffset(pos),
                 left = pos.left + gravityOffset.left,
-                top = pos.top + gravityOffset.top;
+                top = pos.top + gravityOffset.top + window.scrollY;
 
             // delay hiding a bit to avoid flickering
             if (hidden) {
@@ -13295,7 +13295,6 @@ nv.models.multiChart = function() {
             lines2.yDomain(yScale2.domain());
             scatters2.yDomain(yScale2.domain());
             bars2.yDomain(yScale2.domain())
-            bars2.yDomain(yScale2.domain());
             stack2.yDomain(yScale2.domain());
 
             if(dataStack1.length){d3.transition(stack1Wrap).call(stack1);}
