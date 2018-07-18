@@ -50,7 +50,7 @@ nv.models.multiChart = function() {
         yAxis1 = nv.models.axis().scale(yScale1).orient('left').duration(duration),
         yAxis2 = nv.models.axis().scale(yScale2).orient('right').duration(duration),
 
-        legend = nv.models.legend().height(30),
+        legend = nv.models.legend().height(30).align(false),
         tooltip = nv.models.tooltip(),
         dispatch = d3.dispatch('zoom');
 
