@@ -602,6 +602,7 @@ nv.models.multiChart = function() {
                     var dragStartXValue = null;
                     var dragStartYValue = null;
                     zoomLayer.dispatch.on('elementMousemove', function(e) {
+                        if(zoomType !== 'x') return;
                         if (dragStartXValue === null) {
                             return;
                         }
@@ -623,6 +624,7 @@ nv.models.multiChart = function() {
                     });
 
                     zoomLayer.dispatch.on("elementDragStart", function(e) {
+                        if(zoomType !== 'x') return;
                         var pointXLocation;
                         dragStartXValue = e.pointXValue;
                         data.filter(function(series, i) {
@@ -642,6 +644,7 @@ nv.models.multiChart = function() {
                     });
 
                     zoomLayer.dispatch.on("elementDragEnd", function(e) {
+                        if(zoomType !== 'x') return;
                         var MIN_X_DISTANCE = 3;
 
                         if (Math.abs(dragStartXValue - currentXValue) >= MIN_X_DISTANCE) {
