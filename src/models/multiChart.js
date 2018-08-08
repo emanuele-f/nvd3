@@ -61,6 +61,7 @@ nv.models.multiChart = function() {
         selection.each(function(data) {
             var container = d3.select(this),
                 that = this;
+            var divContainer = d3.select(this.parentNode);
             nv.utils.initSVG(container);
 
             chart.update = function() { container.transition().call(chart); };
@@ -381,7 +382,7 @@ nv.models.multiChart = function() {
                     .width(availableWidth)
                     .height(availableHeight)
                     .margin({left:margin.left, top:margin.top})
-                    .svgContainer(container)
+                    .svgContainer(divContainer) /* Note: using the divContainer to allow selection out of chart bounds */
                     .xScale(x);
                 wrap.select(".nv-zoomLayer").call(zoomLayer);
             }
@@ -643,11 +644,17 @@ nv.models.multiChart = function() {
                         zoomLayer.renderSelectArea(pointXLocation)
                     });
 
+                    zoomLayer.dispatch.on("elementDragAbort", function(e) {
+                        dragStartXValue = null;
+                        dragStartX = null;
+                        zoomLayer.removeSelectArea();
+                    });
+
                     zoomLayer.dispatch.on("elementDragEnd", function(e) {
                         if(zoomType !== 'x') return;
                         var MIN_X_DISTANCE = 3;
 
-                        if (Math.abs(dragStartXValue - currentXValue) >= MIN_X_DISTANCE) {
+                        if (dragStartXValue && (Math.abs(dragStartXValue - currentXValue) >= MIN_X_DISTANCE)) {
                             var xDomain = [
                                 d3.min([dragStartXValue, currentXValue]),
                                 d3.max([dragStartXValue, currentXValue])

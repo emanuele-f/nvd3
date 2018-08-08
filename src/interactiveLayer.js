@@ -132,7 +132,7 @@ nv.interactiveGuideline = function() {
                     }
                 }
                 else {
-                    pointXValue = xScale.invert(mouseX);
+                    pointXValue = xScale.invert(Math.min(mouseX, availableWidth));
                 }
 
                 dispatch.elementMousemove({
@@ -262,7 +262,7 @@ nv.zoomLayer = function() {
         ,   width = null
         ,   height = null
         ,   xScale = d3.scale.linear()
-        ,   dispatch = d3.dispatch('elementMousemove', 'elementMouseout', 'elementClick', 'elementDblclick', 'elementMouseDown', 'elementMouseUp', 'elementDragStart', 'elementDragEnd')
+        ,   dispatch = d3.dispatch('elementMousemove', 'elementMouseout', 'elementClick', 'elementDblclick', 'elementMouseDown', 'elementMouseUp', 'elementDragStart', 'elementDragEnd', 'elementDragAbort')
         ,   showGuideLine = true
         ,   svgContainer = null // Must pass the chart's svg, we'll use its mousemove event.
         ,   tooltip = nv.models.tooltip()
@@ -347,9 +347,19 @@ nv.zoomLayer = function() {
                         mouseX: mouseX,
                         mouseY: mouseY
                     });
-                    layer.removeSelectArea(null); //hide the guideline
+
                     tooltip.hidden(true);
-                    return;
+
+                    /* If ouside container bounds */
+                    if(d3.event.target.tagName !== "svg") {
+                        dispatch.elementDragAbort({
+                            mouseX: mouseX,
+                            mouseY: mouseY
+                        });
+
+                        layer.removeSelectArea(null); //hide the guideline
+                        return;
+                    }
                 } else {
                     tooltip.hidden(false);
                 }
@@ -376,7 +386,7 @@ nv.zoomLayer = function() {
                     }
                 }
                 else {
-                    pointXValue = xScale.invert(mouseX);
+                    pointXValue = xScale.invert(Math.min(mouseX, availableWidth));
                 }
 
                 dispatch.elementMousemove({
