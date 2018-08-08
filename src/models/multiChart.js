@@ -14,6 +14,8 @@ nv.models.multiChart = function() {
         noData = null,
         yDomain1,
         yDomain2,
+        yDomainMinY1,
+        yDomainMinY2,
         getX = function(d) { return d.x },
         getY = function(d) { return d.y},
         interpolate = 'linear',
@@ -253,14 +255,22 @@ nv.models.multiChart = function() {
                     }).map(function(x) {return d3.sum(x);})
             }
 
-            yScale1 .domain(yDomain1 || d3.extent(d3.merge(series1).concat(extraValue1BarStacked), function(d) { return d.y } ))
+            var ydomain1 = yDomain1 || d3.extent(d3.merge(series1).concat(extraValue1BarStacked), function(d) { return d.y } );
+            if(typeof yDomainMinY1 === "number")
+                ydomain1[0] = yDomainMinY1;
+
+            yScale1 .domain(ydomain1)
                 .range([0, availableHeight]);
             var series1_stacked_y_domain = d3.max(getStackedAreaYs(series1_stacked));
             if(series1_stacked_y_domain) {
                 yScale1 .domain([0, Math.max(series1_stacked_y_domain, yScale1.domain()[1])]).range([0, availableHeight]);
             }
 
-            yScale2 .domain(yDomain2 || d3.extent(d3.merge(series2).concat(extraValue2BarStacked), function(d) { return d.y } ))
+            var ydomain2 = yDomain2 || d3.extent(d3.merge(series2).concat(extraValue2BarStacked), function(d) { return d.y } );
+            if(typeof yDomainMinY2 === "number")
+                ydomain2[0] = yDomainMinY2;
+
+            yScale2 .domain(ydomain2)
                 .range([0, availableHeight]);
             var series2_stacked_y_domain = d3.max(getStackedAreaYs(series2_stacked))
             if(series2_stacked_y_domain) {
@@ -729,6 +739,8 @@ nv.models.multiChart = function() {
         height:     {get: function(){return height;}, set: function(_){height=_;}},
         showLegend: {get: function(){return showLegend;}, set: function(_){showLegend=_;}},
         xScale: {get: function(){return x;}, set: function(_){ x = _; xAxis.scale(x); }},
+        yDomainMinY1: {get: function(){return yDomainMinY1;}, set: function(_){yDomainMinY1=_;}},
+        yDomainMinY2: {get: function(){return yDomainMinY2;}, set: function(_){yDomainMinY2=_;}},
         yDomain1:      {get: function(){return yDomain1;}, set: function(_){yDomain1=_;}},
         yDomain2:    {get: function(){return yDomain2;}, set: function(_){yDomain2=_;}},
         noData:    {get: function(){return noData;}, set: function(_){noData=_;}},
