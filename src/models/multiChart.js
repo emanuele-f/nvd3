@@ -16,6 +16,8 @@ nv.models.multiChart = function() {
         yDomain2,
         yDomainMinY1,
         yDomainMinY2,
+        yDomainRatioY1 = 1.0,
+        yDomainRatioY2 = 1.0,
         getX = function(d) { return d.x },
         getY = function(d) { return d.y},
         interpolate = 'linear',
@@ -259,6 +261,7 @@ nv.models.multiChart = function() {
             var ydomain1 = yDomain1 || d3.extent(d3.merge(series1).concat(extraValue1BarStacked), function(d) { return d.y } );
             if(typeof yDomainMinY1 === "number")
                 ydomain1[0] = yDomainMinY1;
+            ydomain1[1] /= yDomainRatioY1;
 
             yScale1 .domain(ydomain1)
                 .range([0, availableHeight]);
@@ -270,6 +273,7 @@ nv.models.multiChart = function() {
             var ydomain2 = yDomain2 || d3.extent(d3.merge(series2).concat(extraValue2BarStacked), function(d) { return d.y } );
             if(typeof yDomainMinY2 === "number")
                 ydomain2[0] = yDomainMinY2;
+            ydomain2[1] /= yDomainRatioY2;
 
             yScale2 .domain(ydomain2)
                 .range([0, availableHeight]);
@@ -751,6 +755,8 @@ nv.models.multiChart = function() {
         xScale: {get: function(){return x;}, set: function(_){ x = _; xAxis.scale(x); }},
         yDomainMinY1: {get: function(){return yDomainMinY1;}, set: function(_){yDomainMinY1=_;}},
         yDomainMinY2: {get: function(){return yDomainMinY2;}, set: function(_){yDomainMinY2=_;}},
+        yDomainRatioY1: {get: function(){return yDomainRatioY1;}, set: function(_){yDomainRatioY1=_;}},
+        yDomainRatioY2: {get: function(){return yDomainRatioY2;}, set: function(_){yDomainRatioY2=_;}},
         yDomain1:      {get: function(){return yDomain1;}, set: function(_){yDomain1=_;}},
         yDomain2:    {get: function(){return yDomain2;}, set: function(_){yDomain2=_;}},
         noData:    {get: function(){return noData;}, set: function(_){noData=_;}},
